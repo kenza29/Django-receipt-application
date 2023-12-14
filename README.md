@@ -1,21 +1,21 @@
 # Django-receipt-application
  Cette application offre une plateforme de gestion des utilisateurs et des reçus. Elle permet aux administrateurs de gérer les comptes utilisateurs et aux utilisateurs de gérer leurs reçus d'achat.
 
- ##Configuration Initiale
- ###Prérequis
+ ## Configuration Initiale
+ ### Prérequis
 Python (3.7 ou plus récent)
 Django (3.1 ou plus récent)
 
-###Configurer les modèles Django :
+### Configurer les modèles Django :
 Les modèles Django sont déjà configurés dans votre application. Django utilise une base de données SQLite par défaut, ce qui simplifie la configuration initiale.
 
-###Exécution des migrations :
+### Exécution des migrations :
 Générez votre base de données avec les migrations Django pour créer les structures de données nécessaires:
 ```shell
 python manage.py makemigrations
 python manage.py migrate
 ```
-###Création d'un Superutilisateur
+### Création d'un Superutilisateur
 Pour gérer votre application, créez un superutilisateur qui aura accès à l'interface d'administration de Django:
 ```shell
 
