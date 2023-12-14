@@ -1,0 +1,9 @@
+<!-- form for adding receipt -->
+
+<form id="addReceiptForm" method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">Ajouter</button>
+</form>
+
+

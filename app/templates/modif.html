@@ -1,0 +1,8 @@
+<!-- modif.html -->
+<!-- form for edditing receipt -->
+
+<form method="post" id="editReceiptForm">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+</form>

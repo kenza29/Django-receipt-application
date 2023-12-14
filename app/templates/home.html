@@ -1,0 +1,374 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FintechRacy</title>
+  <!-- Static file loading for CSS -->
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=5">
+  <link rel="stylesheet" href="{% static 'boxicons-master/boxicons-master/css/boxicons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'Font-Awesome-6.x/css/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'bootstrap-5.3.0-dist/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'DataTables/DataTables-1.13.4/css/jquery.dataTables.min.css' %}">
+  <!-- Static file loading for JS -->
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@latest/dist/sweetalert2.all.min.js"></script>
+  <script src="{% static 'js/jquery-3.7.0.min.js' %} "> </script>
+  <script src="{% static 'DataTables/DataTables-1.13.4/js/jquery.dataTables.min.js' %}"></script>
+  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'bootstrap-5.3.0-dist/js/bootstrap.min.js' %}"></script>
+
+</head>
+
+<body>
+  <!-- Navigation bar -->
+  <nav>
+    <div class="navbar">
+      <i class='bx bx-menu'></i>
+      <div class="logo ">
+        <a href="#"><img src="{% static 'img/logofintech.png' %}" width="60" height="60"></a>
+      </div>
+
+      <div class="nav-links">
+        <div class="sidebar-logo">
+          <span class="logo-name"><img src="{% static 'img/logo.png' %}" width="50" height="50"></span>
+          <i class='bx bx-x'></i>
+        </div>
+        <ul class="links">
+          <li><a href="{% url 'home' %}">HOME</a></li>
+
+          {% if user.is_authenticated and user.is_superuser %}
+          <li><a href="{% url 'admin_page' %}">ADMIN PAGE</a></li>
+          {% endif %}
+          <li>
+            {% if user.is_authenticated %}
+            <a href="#"><i class="far fa-user user-icon"></i>{{ user.username }}</a>
+            <i class='bx bxs-chevron-down js-arrow arrow '></i>
+            <ul class="js-sub-menu sub-menu">
+              <li><a href="#"><i class="far fa-user"></i> Edit Profile </a>
+              </li>
+              <li><a href="#"><i class="fa-regular fa-envelope"></i>Inbox </a></li>
+              <li><a href="#"><i class="fa-solid fa-chart-line"></i>Analytics </a></li>
+              <li><a href="#"><i class="fa-solid fa-sliders"></i>Settings </a></li>
+              <li><a href="#"> <i class="fa-regular fa-circle-question"></i>Help & Support</a> </li>
+              <li><a href="{% url 'signout' %}"> <i class="fa-solid fa-arrow-right-from-bracket"></i>Sign out </a></li>
+
+              {% else %}
+              <a href="{% url 'signin' %}">Sign n</a>
+              <a href="{% url 'signup' %}">Sign up</a>
+              {% endif %}
+            </ul>
+          </li>
+
+        </ul>
+      </div>
+
+    </div>
+  </nav>
+
+  <div  class="buttons">
+  <!-- Buttons for edditing , deleting, adding receipts -->
+  <button type="button" class="btn btn-primary addReceiptModal" data-bs-toggle="modal" data-bs-target="#addReceiptModal"> Add Receipt  </button>
+  <button type="button" class="btn btn-danger" id="deleteReceiptButton" disabled>Delete</button>
+  <button type="button" class="btn btn-secondary" id="editReceiptButton" disabled>Edit</button>
+</div>
+<!-- Form for edditing -->
+<div class="modal fade" id="editReceiptModal" tabindex="-1" aria-labelledby="editReceiptModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="editReceiptModalLabel"> Edit receipt</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+          </div>
+      </div>
+  </div>
+</div>
+
+<!-- Form for adding -->
+<div class="modal fade" id="addReceiptModal" tabindex="-1" aria-labelledby="addReceiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addReceiptModalLabel">New receipt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Receipt's information -->
+
+<h2> Information about receipts : </h2>
+  <ul class="list-group">
+    {% for purchase in purchases %}
+      <li class="list-group-item">
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="{{ purchase }}">
+          <label class="form-check-label" for="{{ purchase }}">{{ purchase }}</label>
+        </div>
+        <div class="details" style="display: none;"></div>
+       
+      </li>
+    {% endfor %}
+  </ul>
+
+
+<script>
+  $(document).ready(function () {
+    $('.form-check-input').on('change', function () {
+      // Event handler for changes in the receipt checkboxes.
+
+      var isChecked = $(this).prop('checked');
+      var detailsContainer = $(this).closest('li').find('.details');
+
+      if (isChecked) {
+        var purchaseNumber = $(this).attr('id');
+
+            // Fetch and display receipt details via AJAX when a checkbox is checked.
+          $.ajax({
+          url: "{% url 'receipt_details' purchase_number=0 %}".replace('0', purchaseNumber),
+          method: 'GET',
+          success: function (data) {
+            // Populate the details div with receipt information.
+            detailsContainer.html(
+              '<p class="mb-1"><strong>Store Name:</strong> ' + data.store_name + '</p>' +
+              '<p class="mb-1"><strong>Date of Purchase:</strong> ' + data.date_of_purchase + '</p>' +
+              '<p class="mb-1"><strong>Item List:</strong> ' + data.item_list + '</p>' +
+              '<p class="mb-1"><strong>Total Amount:</strong> ' + data.total_amount + '</p>'
+            );
+
+            // show détails
+            detailsContainer.show();
+          },
+          error: function (error) {
+            console.log('Error:', error);
+          }
+        });
+      } else {
+            // Hide and clear the details div when a checkbox is unchecked.
+        detailsContainer.html('');
+        detailsContainer.hide();
+      }
+    });
+
+    // Load the form for adding a receipt in the modal when it's about to be shown.
+
+    $('#addReceiptModal').on('show.bs.modal', function () {
+      $.ajax({
+          url: "{% url 'add_receipt_form' %}",  
+          success: function (data) {
+              $('#addReceiptModal .modal-body').html(data);
+          }
+      });
+  });
+  
+  // Handle the submission of the add receipt form.
+  $(document).on('submit', '#addReceiptForm', function(e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    // AJAX request for adding a new receipt.
+    $.ajax({
+        url: "{% url 'add_receipt' %}",
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                    title: 'success !',
+                    text: response.message,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#addReceiptModal').modal('hide');
+                        location.reload(); 
+                    }
+                });
+            } else {
+                // Form's error
+                var errorMsg = response.errors ? JSON.stringify(response.errors) : "Something went wrong.";
+                Swal.fire({
+                    title: ' Error !',
+                    text: errorMsg,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            Swal.fire({
+                title: 'Error !',
+                text: 'Erreur AJAX: ' + error,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    });
+});
+
+
+    // Enable or disable the delete receipt button based on checkbox selection.
+    $('.form-check-input').on('change', function () {
+      var anyChecked = $('.form-check-input:checked').length > 0;
+      $('#deleteReceiptButton').prop('disabled', !anyChecked);
+    });
+    var deleteReceiptUrl = "{% url 'delete_receipt' 'DUMMY_PURCHASE_NUMBER' %}".replace('/DUMMY_PURCHASE_NUMBER', '');
+
+    $('#deleteReceiptButton').on('click', function () {
+      var totalSelected = $('.form-check-input:checked').length; // Total number of checkbox checked
+      var processed = 0; 
+
+    $('.form-check-input:checked').each(function () {
+        var checkBox = $(this);
+        var purchaseNumber = checkBox.attr('id');
+        var url = deleteReceiptUrl + encodeURIComponent(purchaseNumber) + '/';
+      
+        $.ajax({
+            url: url,
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                if (response.success) {
+                    checkBox.closest('li.list-group-item').remove();  // Delete element from DOM
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Receipt deleted with success',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error !',
+                        text: response.message,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            },
+            error: function () {
+                Swal.fire({
+                    title: 'Error !',
+                    text: 'Something went wrong.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            },
+            complete: function() {
+            // Update the processed counter and disable the delete button if all selected receipts are processed.
+                processed++;
+                if (processed === totalSelected) {
+                    if ($('.form-check-input:checked').length === 0) {
+                        $('#deleteReceiptButton').prop('disabled', true);
+                    }
+                }
+            }
+        });
+    });
+});
+
+    $(document).ready(function () {
+
+        // Enable or disable the edit receipt button based on the number of selected checkboxes.
+        $('.form-check-input').on('change', function () {
+            var selectedCheckboxes = $('.form-check-input:checked');
+            $('#editReceiptButton').prop('disabled', selectedCheckboxes.length !== 1);
+        });
+        
+        // Load the edit receipt form in the modal when the edit button is clicked.
+
+        var loadEditReceiptUrl = "{% url 'load_edit_receipt_form' 'DUMMY_PURCHASE_NUMBER' %}".replace('/DUMMY_PURCHASE_NUMBER', '');
+        $('#editReceiptButton').on('click', function () {
+            var purchaseNumber = $('.form-check-input:checked').first().attr('id');
+            var url = loadEditReceiptUrl + encodeURIComponent(purchaseNumber) + '/';
+            // AJAX request to load the edit form.
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                success: function (response) {
+                    $('#editReceiptModal .modal-body').html(response);
+                    $('#editReceiptModal').modal('show');
+                }
+            });
+        });
+        // Handle the submission of the edit receipt form.
+
+        var submitEditReceiptUrl ="{% url 'submit_edit_receipt' 'DUMMY_PURCHASE_NUMBER' %}".replace('/DUMMY_PURCHASE_NUMBER', '');
+
+        $(document).on('submit', '#editReceiptForm', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            var purchaseNumber = $('.form-check-input:checked').first().attr('id');
+            var url = submitEditReceiptUrl + encodeURIComponent(purchaseNumber) + '/';
+            // AJAX request for submitting the edit form.
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                  if (response.success) {
+                    Swal.fire({
+                        title: 'Success !',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $('#editReceiptModal').modal('hide');
+                            location.reload(); // On success, reload the page or update the receipts list dynamically.
+
+                        }
+                    });
+                } else {
+                    // Handle form errors and display appropriate messages.
+                    var errorMsg = response.errors ? JSON.stringify(response.errors) : "Something went worng.";
+                    Swal.fire({
+                        title: 'Error !',
+                        text: errorMsg,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+                },
+                error: function(xhr, status, error) {
+                    // Handle form errors and display appropriate messages.
+                    var errorMsg = response.errors ? JSON.stringify(response.errors) : "Something went worng.";
+                    Swal.fire({
+                        title: 'Error !',
+                        text: errorMsg,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+    });
+
+
+
+});
+
+</script>
+
+
+  
+</body>
+
+</html>
